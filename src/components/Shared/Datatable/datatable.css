@@ -1,0 +1,42 @@
+.odd-row {
+  background: #f7edd8;
+}
+td {
+  border: 1px solid #cacaca;
+  white-space: nowrap;
+}
+table.data-table td {
+  font-size: 13px;
+  padding: 5px 10px;
+}
+table.data-table th {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 10px;
+}
+table.data-table tr {
+  border: 1px solid #f1f1f1;
+}
+table.data-table tr:hover {
+  background: #f1f1f1;
+}
+/* .data-table{
+    overflow-x: scroll;
+} */
+.table-container {
+  overflow-x: auto;
+}
+
+.printable-data-heading {
+  display: none;
+}
+
+@media print {
+  .printable-data {
+    padding: 15px;
+  }
+
+  .printable-data-heading {
+    display: block;
+  }
+}

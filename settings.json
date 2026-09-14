@@ -1,0 +1,16 @@
+{
+  "emmet.triggerExpansionOnTab": true,
+  // "files.associations": { "*html": "html", "*js": "html", "*.js": "js" }
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": true,
+  "editor.cursorStyle": "line",
+  "editor.formatOnPaste": true,
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 13,
+  "editor.guides.indentation": true,
+  "editor.stickyScroll.enabled": true
+}

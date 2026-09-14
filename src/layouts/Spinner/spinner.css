@@ -1,0 +1,143 @@
+.main-container {
+  position: absolute;
+  background-color: #fff9f2f6;
+  width: 100%;
+  height: 100%;
+  z-index: 900;
+}
+
+.floatL {
+  float: left;
+}
+
+.clear {
+  clear: both;
+  line-height: 0;
+  font-size: 0;
+  display: block;
+}
+
+.flip-container {
+  -webkit-perspective: 1000;
+  width: 400px;
+  z-index: 1000;
+  position: absolute;
+  top: 25%;
+}
+
+@media (min-width: 280px) {
+  .flip-container {
+    right: -20%;
+  }
+}
+
+@media (min-width: 360px) {
+  .flip-container {
+    right: -5%;
+  }
+}
+
+@media (min-width: 400px) {
+  .flip-container {
+    right: 0%;
+  }
+}
+
+@media (min-width: 500px) {
+  .flip-container {
+    right: 15%;
+  }
+}
+
+@media (min-width: 768px) {
+  .flip-container {
+    right: 25%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flip-container {
+    right: 50%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .flip-container {
+    right: 35%;
+  }
+}
+
+.flipper {
+  transition: 0.6s;
+  -webkit-transform-style: preserve-3d;
+  position: relative;
+  height: 200px;
+}
+
+.front,
+.back {
+  width: 400px;
+  height: 200px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  -webkit-backface-visibility: hidden;
+  color: #fff;
+  text-shadow: 1px 1px #000;
+  font-size: 2em;
+  line-height: 200px;
+  text-align: center;
+}
+
+.back {
+  -webkit-transform: rotateY(180deg);
+  /* background: #3498db; */
+}
+
+.front {
+  z-index: 2;
+  /* background: #2ecc71; */
+}
+
+.flip-container .flipper,
+.flip-container.hover .flipper {
+  animation: flipY 3s infinite;
+}
+
+.flip-container p {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.vertical-flip-container .back {
+  -webkit-transform: rotateX(180deg);
+}
+
+.vertical-flip-container .flipper,
+.vertical-flip-container.hover .flipper {
+  animation: flipX 4s infinite;
+}
+
+.bookflip-container .flipper {
+  -webkit-transform-origin: 0;
+}
+
+/* Flip Animation */
+@keyframes flipX {
+  from {
+    -webkit-transform: rotateX(180deg);
+  }
+
+  to {
+    -webkit-transform: rotateX(-180deg);
+  }
+}
+@keyframes flipY {
+  from {
+    -webkit-transform: rotateY(180deg);
+  }
+
+  to {
+    -webkit-transform: rotateY(-180deg);
+  }
+}
