@@ -24,6 +24,7 @@ import {
 
 import { Dashboard } from "../components/Dashboard";
 import { Registration } from "../components/Registration";
+import { Consult } from "../components/Consult";
 
 import { EntryReport, Tagging, Updations } from "../components/Reports";
 import {
@@ -64,6 +65,7 @@ export const componentRegistry = {
   //Other
   Dashboard: <Dashboard />,
   Registration: <Registration />,
+  Consult: <Consult />,
   //Reports
   EntryReport: <EntryReport />,
   Tagging: <Tagging />,

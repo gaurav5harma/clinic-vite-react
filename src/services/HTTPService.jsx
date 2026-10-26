@@ -212,6 +212,9 @@ export const getStudentsService = async (params) => {
 export const getPatientsByMobileService = async (params) => {
   return httpPOST("/fetch/_GetPatientsByMobile", params);
 };
+export const getCurrentConsultationService = async (params) => {
+  return httpPOST("/fetch/_GetCurrentConsultation", params);
+};
 export const getEmployeesService = async (params) => {
   return httpPOST("/fetch/_GetEmployees", params);
 };
