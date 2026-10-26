@@ -91,7 +91,7 @@ export default function Login(props) {
             <a href="." className="navbar-brand navbar-brand-autodark">
               <img src={appData.appLogo} alt={appData.appTitle} height={115} />
             </a>
-            <h1>Gurunanak Hospital</h1>
+            <h1>Shri Gurunanak Hospital</h1>
           </div>
           <div className="card card-md">
             <div className="card-body">

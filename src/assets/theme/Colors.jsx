@@ -1,7 +1,7 @@
 const Colors = {
   info: "#33b5e5",
   infoDark: "#0099CC",
-  defaultThemeColor: "#953835",
+  defaultThemeColor: "#2f8374",
   // defaultThemeColor: "#0073b4",
   defaultThemeDarkColor: "rgb(56,41,12)",
   lightYellow: "#FEFBE7",

@@ -20,7 +20,7 @@ const AccessMaster = (props) => {
   const location = useLocation();
 
   const defaultPyaload = {
-    userId: location.state ? location.state.userId : 0,
+    // userId: location.state ? location.state.userId : 0,
     roleId: "",
   };
 
@@ -89,13 +89,15 @@ const AccessMaster = (props) => {
   };
   useEffect(() => {
     getUsers();
-    getRoles();
+    // getRoles();
     getRoutes();
     getActions();
   }, []);
   //
   useEffect(() => {
-    getUserDataByUserId(formsData.userId);
+    if (formsData.userId) {
+      getUserDataByUserId(formsData.userId);
+    }
   }, [formsData]);
   const getUserDataByUserId = (userId) => {
     getDataByUserIdService({ userId: userId })

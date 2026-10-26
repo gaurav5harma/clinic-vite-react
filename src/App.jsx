@@ -20,7 +20,7 @@ export default function App(props) {
   const [userData, updateUserData] = useState(getUserData());
   const [loading, setLoading] = useState(false);
   const [showUpdateBar, toggleUpdateBar] = useState(false);
-  const appVersion = { version: "1.0.13", build: 18 };
+  const appVersion = { version: "0.0.1", build: 1 };
   // const navigate = useNavigate();
 
   axios.defaults.baseURL = "https://access.linesoflogic.com/clinic/api";

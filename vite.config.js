@@ -13,7 +13,7 @@ const manifestForPlugin = {
   registerType: "prompt",
   includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked.png"],
   manifest: {
-    name: "Gurunanak Hospital",
+    name: "Shri Gurunanak Hospital",
     short_name: "checkup-wala",
     theme_color: "#5a0c0c",
     background_color: "#5a0c0c",

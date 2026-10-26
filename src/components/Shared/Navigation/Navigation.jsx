@@ -54,9 +54,9 @@ const Navigation = () => {
                           key={Math.random()}
                         >
                           <span className="nav-link">
-                            <span className="nav-link-icon d-md-none d-lg-inline-block">
+                            {/* <span className="nav-link-icon d-md-none d-lg-inline-block">
                               <FcHome />
-                            </span>
+                            </span> */}
                             {el.name}
                           </span>
                         </NavLink>

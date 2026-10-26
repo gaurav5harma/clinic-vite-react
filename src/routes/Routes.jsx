@@ -23,6 +23,7 @@ import {
 } from "../components/Masters";
 
 import { Dashboard } from "../components/Dashboard";
+import { Registration } from "../components/Registration";
 
 import { EntryReport, Tagging, Updations } from "../components/Reports";
 import {
@@ -62,6 +63,7 @@ export const componentRegistry = {
   UpdateEntries: <UpdateEntries />,
   //Other
   Dashboard: <Dashboard />,
+  Registration: <Registration />,
   //Reports
   EntryReport: <EntryReport />,
   Tagging: <Tagging />,

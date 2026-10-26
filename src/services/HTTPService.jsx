@@ -55,6 +55,12 @@ export const addNewVehicleService = (params) => {
 export const addNewEntryService = (params) => {
   return httpPOST("/create/_AddNewEntry", params);
 };
+export const addNewPatientService = (params) => {
+  return httpPOST("/create/_AddNewPatient", params);
+};
+export const generateOpdTokenService = (params) => {
+  return httpPOST("/create/_GenerateOPDToken", params);
+};
 export const addNewStatusService = (params) => {
   return httpPOST("/create/_AddNewStatus", params);
 };
@@ -202,6 +208,9 @@ export const getDesignationsBySchoolService = async (params) => {
 };
 export const getStudentsService = async (params) => {
   return httpPOST("/fetch/_GetStudents", params);
+};
+export const getPatientsByMobileService = async (params) => {
+  return httpPOST("/fetch/_GetPatientsByMobile", params);
 };
 export const getEmployeesService = async (params) => {
   return httpPOST("/fetch/_GetEmployees", params);

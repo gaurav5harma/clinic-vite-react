@@ -12629,9 +12629,9 @@ a.badge {
 .btn-ghost-secondary,
 .btn-outline-secondary,
 .btn-secondary {
-  --tblr-btn-color: #ffffffff;
-  --tblr-btn-color-interactive: #ffffffff;
-  --tblr-btn-color-text: #fafbfc;
+  --tblr-btn-color: white;
+  --tblr-btn-color-interactive: navy;
+  --tblr-btn-color-text: white;
 }
 .btn-ghost-success,
 .btn-outline-success,

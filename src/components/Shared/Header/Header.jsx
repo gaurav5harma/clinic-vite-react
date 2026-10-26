@@ -296,10 +296,10 @@ const Header = (props) => {
               src={appData.appLogo}
               width={110}
               height={52}
-              alt="Gurunanak Hospital"
+              alt="Shri Gurunanak Hospital"
               className="navbar-brand-image"
             /> */}
-            <h2 className="m-0">Gurunanak Hospital</h2>
+            <h2 className="m-0">Shri Gurunanak Hospital</h2>
           </a>
         </h1>
         <h2 className="m-0" style={{ color: "black" }}>

@@ -12372,6 +12372,7 @@ a.badge {
 .btn-yellow:hover,
 .btn-youtube:hover {
   color: white;
+  font-weight: 600;
   background: var(--tblr-btn-color-interactive);
   border-color: var(--tblr-btn-color);
 }
@@ -12629,9 +12630,9 @@ a.badge {
 .btn-ghost-secondary,
 .btn-outline-secondary,
 .btn-secondary {
-  --tblr-btn-color: #ffffffff;
-  --tblr-btn-color-interactive: #ffffffff;
-  --tblr-btn-color-text: #fafbfc;
+  --tblr-btn-color: navy;
+  --tblr-btn-color-interactive: navy;
+  --tblr-btn-color-text: white;
 }
 .btn-ghost-success,
 .btn-outline-success,
