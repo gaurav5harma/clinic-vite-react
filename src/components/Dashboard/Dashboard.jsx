@@ -8,6 +8,7 @@ import PageWrapper from "../../hoc/PageWrapper";
 import {
   getActiveCentersListService,
   getDashboardService,
+  startConsultationService,
 } from "../../services/HTTPService";
 import { Select } from "../Shared/Elements";
 import { toast } from "react-toastify";
@@ -190,31 +191,55 @@ const Dashboard = (props) => {
     };
 
     const getStatusConfig = (status) => {
-      const normalized = (status || "Waiting").toLowerCase();
-      if (normalized === "completed") {
-        return {
-          label: "Completed",
-          style: {
-            background: "#e8f7ef",
-            color: "#1d8f5d",
-            border: "1px solid #bfe8d1",
-            padding: "4px 10px",
-            borderRadius: "999px",
-            fontSize: "12px",
-            fontWeight: 600,
-          },
-        };
-      }
-
-      return {
-        label: "Waiting",
-        style: {
+      const normalized = String(status || "WAITING")
+        .trim()
+        .replace(/[_-]+/g, " ")
+        .toUpperCase();
+      const labels = {
+        "WAITING": "Waiting",
+        "IN CONSULTATION": "In Consultation",
+        "SKIPPED": "Skipped",
+        "COMPLETED": "Completed",
+      };
+      const statusStyles = {
+        "WAITING": {
           background: "#fff4df",
           color: "#b7771d",
           border: "1px solid #f0d59a",
-          padding: "4px 10px",
+        },
+        "IN CONSULTATION": {
+          background: "#e8f1ff",
+          color: "#2864a5",
+          border: "1px solid #bfd5f2",
+        },
+        "SKIPPED": {
+          background: "#fff0f0",
+          color: "#b33a3a",
+          border: "1px solid #f0c4c4",
+        },
+        "COMPLETED": {
+          background: "#e8f7ef",
+          color: "#1d8f5d",
+          border: "1px solid #bfe8d1",
+        },
+      };
+      const label =
+        labels[normalized] ||
+        normalized
+          .toLowerCase()
+          .replace(/\b\w/g, (character) => character.toUpperCase());
+
+      return {
+        label,
+        style: {
+          ...(statusStyles[normalized] || {
+            background: "#f1f3f5",
+            color: "#495057",
+            border: "1px solid #d6d8db",
+          }),
+          padding: "4px 8px",
           borderRadius: "999px",
-          fontSize: "12px",
+          fontSize: "9px",
           fontWeight: 600,
         },
       };
@@ -559,6 +584,20 @@ const Dashboard = (props) => {
                       padding: "5px 10px",
                       minWidth: "80px",
                       fontSize: "11px",
+                    }}
+                    onClick={() => {
+                      startConsultationService({ uhid: opds[0]?.uhid }).then(res=>{
+                         if (res.status === 200) {
+                            if (res.data.status === "success") {
+                               toast.success(res.data.msg);
+                                getDetails();
+                            } else {
+                               toast.error(res.data.msg);
+                            }
+                        } else {
+                          toast.error("Something went wrong.");
+                        }
+                      });
                     }}
                   >
                     Start Consultation

@@ -61,6 +61,9 @@ export const addNewPatientService = (params) => {
 export const generateOpdTokenService = (params) => {
   return httpPOST("/create/_GenerateOPDToken", params);
 };
+export const startConsultationService = (params) => {
+  return httpPOST("/update/_StartConsultation", params);
+};
 export const addNewStatusService = (params) => {
   return httpPOST("/create/_AddNewStatus", params);
 };
