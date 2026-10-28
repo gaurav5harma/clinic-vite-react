@@ -1,0 +1,270 @@
+.consult-section {
+  overflow: hidden;
+                  border: 1px solid #dfe6ed !important;
+                  border-radius: 8px !important;
+                  background: #fff;
+                  transition: border-color 0.2s ease;
+                }
+
+                .consult-section:hover {
+                  border-color: #91aaa9 !important;
+                }
+
+                .consult-section summary {
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  gap: 12px;
+                  padding: 10px 12px !important;
+                  background: #f2f5f8;
+                  color: #2f8374;
+                  cursor: pointer;
+                  list-style: none;
+                  transition: background 0.2s ease, color 0.2s ease;
+                }
+
+                .consult-section summary::-webkit-details-marker {
+                  display: none;
+                }
+
+                .consult-section summary:hover,
+                .consult-section[open] summary {
+                  background: #2f8374;
+                  color: #fff;
+                }
+
+                .consult-section summary:focus-visible {
+                  outline: 2px solid #248f86;
+                  outline-offset: -3px;
+                }
+
+                .consult-summary-meta {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  margin-left: auto;
+                }
+
+                .consult-toggle {
+                  flex: 0 0 auto;
+                  color: #60758a;
+                  font-size: 17px;
+                  line-height: 1;
+                }
+
+                .consult-toggle::before {
+                  content: "+";
+                }
+
+                .consult-section[open] .consult-toggle {
+                  color: #fff;
+                }
+
+                .consult-section[open] .consult-toggle::before {
+                  content: "-";
+                }
+
+                .consult-count {
+                  min-width: 62px;
+                  padding: 3px 8px;
+                  border: 1px solid #d5dee6;
+                  border-radius: 6px;
+                  background: #fff;
+                  color: #526579;
+                  font-size: 11px;
+                  font-weight: 500;
+                  text-align: center;
+                  white-space: nowrap;
+                }
+
+                .consult-section[open] .consult-count {
+                  border-color: rgba(255, 255, 255, 0.35);
+                  background: rgba(255, 255, 255, 0.12);
+                  color: #fff;
+                }
+
+                .consult-field {
+                  min-height: 48px;
+                  padding: 7px 8px;
+                  border-bottom: 1px solid #e9edf1;
+                  transition: background 0.15s ease;
+                }
+
+                .consult-field:hover {
+                  background: #f5f8fa;
+                }
+
+                .consult-note {
+                  min-height: 90px;
+                  resize: vertical;
+                }
+
+                .consult-action {
+                  min-height: 38px;
+                  border-radius: 6px;
+                  font-weight: 600;
+                  transition: background 0.15s ease, transform 0.15s ease;
+                }
+
+                .consult-action:hover {
+                  transform: translateY(-1px);
+                }
+
+                .prescription-list {
+                  border-bottom: 1px solid #e3e8ed;
+                }
+
+                .prescription-header {
+                  display: grid;
+                  grid-template-columns: minmax(150px, 1.45fr) repeat(6, minmax(105px, 1fr)) minmax(120px, 1fr) 44px;
+                  gap: 8px;
+                  padding: 8px 10px;
+                  border-bottom: 1px solid #dfe6ed;
+                  background: #f7f9fb;
+                  color: #4c79b0;
+                  font-size: 12px;
+                  font-weight: 600;
+                }
+
+                .prescription-row {
+                  display: grid;
+                  grid-template-columns: minmax(150px, 1.45fr) repeat(6, minmax(105px, 1fr)) minmax(120px, 1fr) 44px;
+                  gap: 8px;
+                  align-items: start;
+                  padding: 10px;
+                  border-bottom: 1px solid #edf0f3;
+                  background: #fff;
+                }
+
+                .prescription-row:last-child {
+                  border-bottom: 0;
+                }
+
+                .prescription-row .form-label {
+                  margin-bottom: 3px;
+                  color: #6c7d90;
+                  font-size: 11px;
+                  font-weight: 600;
+                }
+
+                .prescription-row .form-control,
+                .prescription-row .form-select {
+                  min-height: 38px;
+                  height: 38px;
+                  font-size: 13px;
+                }
+
+                .consult-section.prescription-section {
+                  position: relative;
+                  overflow: visible;
+                  z-index: 30;
+                }
+
+                .prescription-search-wrap {
+                  position: relative;
+                  z-index: 40;
+                  padding: 10px;
+                  border-radius: 0 0 8px 8px;
+                  background: #fbfcfd;
+                }
+
+                .prescription-suggestions {
+                  position: relative;
+                  z-index: 999;
+                  margin-top: 6px;
+                  max-height: 220px;
+                  overflow-y: auto;
+                  border: 1px solid #dfe6ed;
+                  border-radius: 7px;
+                  background: #fff;
+                  box-shadow: 0 8px 18px rgba(37, 55, 72, 0.12);
+                }
+
+                .prescription-suggestion {
+                  width: 100%;
+                  border: 0;
+                  border-bottom: 1px solid #edf0f3;
+                  padding: 9px 12px;
+                  background: #fff;
+                  text-align: left;
+                  color: #243746;
+                }
+
+                .prescription-suggestion:hover {
+                  background: #eff6f4;
+                }
+
+                .prescription-suggestion:last-child {
+                  border-bottom: 0;
+                }
+
+                .prescription-empty {
+                  padding: 18px 10px;
+                  color: #8a98a6;
+                  text-align: center;
+                }
+
+                .prescription-delete {
+                  width: 38px;
+                  height: 38px;
+                  margin-top: 19px;
+                  padding: 0;
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                }
+
+                @media (max-width: 991px) {
+                  .prescription-header {
+                    display: none;
+                  }
+
+                  .prescription-row {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                  }
+
+                  .prescription-delete {
+                    margin-top: 0;
+                  }
+                }
+
+                @media (max-width: 575px) {
+                  .prescription-row {
+                    grid-template-columns: 1fr;
+                  }
+
+                  .prescription-delete {
+                    width: 100%;
+                  }
+                }
+
+                @media (max-width: 575px) {
+                  .consult-section summary {
+                    padding: 10px !important;
+                  }
+
+                  .consult-field {
+                    min-height: auto;
+                  }
+                }
+
+.prescription-field-error .form-control,
+.prescription-field-error .form-select {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.1rem rgba(220, 53, 69, 0.12);
+}
+
+.consult-index {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(91, 130, 160, 0.16);
+  color: inherit;
+}
+
+.consult-field {
+  min-width: 0;
+}

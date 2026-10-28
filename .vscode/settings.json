@@ -8,11 +8,16 @@
   "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorStyle": "line",
   "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
   "editor.fontFamily": "Source Code Pro",
   "editor.fontLigatures": true,
   "editor.fontSize": 13,
   "editor.guides.indentation": true,
   "editor.stickyScroll.enabled": true,
   "editor.tabCompletion": "onlySnippets",
-  "editor.snippetSuggestions": "top"
+  "editor.snippetSuggestions": "top",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

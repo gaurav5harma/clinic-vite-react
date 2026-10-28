@@ -15,6 +15,7 @@ import Wrapper from "./hoc/Wrapper";
 import Header from "./components/Shared/Header/Header";
 import SignUp from "./components/SignUp/SignUp";
 import { getAppVersionService } from "./services/HTTPService";
+import InstallPrompt from "./components/Shared/InstallPrompt";
 
 export default function App(props) {
   const [userData, updateUserData] = useState(getUserData());
@@ -36,7 +37,7 @@ export default function App(props) {
 
       const spinnerException = [
         "UploadItemAttachment",
-        "GetAllQueries",
+        "GetAllMedicines",
         "GetAllModules",
         "GetAllShabds",
         "Check",
@@ -110,6 +111,7 @@ export default function App(props) {
 
   return (
     <>
+      {/* <InstallPrompt /> */}
       {Object.keys(getUserData()).length === 0 ? (
         <Suspense fallback={<Spinner></Spinner>}>
           <ToastContainer

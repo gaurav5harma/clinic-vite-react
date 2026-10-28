@@ -10,7 +10,11 @@ const manifestForPlugin = {
   server: {
     host: true,
   },
-  registerType: "prompt",
+  registerType: "autoUpdate",
+  injectRegister: "auto",
+  devOptions: {
+    enabled: false,
+  },
   includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked.png"],
   manifest: {
     name: "Shri Gurunanak Hospital",

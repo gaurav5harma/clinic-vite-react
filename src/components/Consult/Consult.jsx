@@ -2,12 +2,24 @@ import { useEffect, useState } from "react";
 import { FaCheck, FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import PageWrapper from "../../hoc/PageWrapper";
-import { getCurrentConsultationService } from "../../services/HTTPService";
+import {
+  getAllMedicinesServices,
+  getCurrentConsultationService,
+  requestPoliciesService,
+} from "../../services/HTTPService";
+import { NumInput, Select, TextInput } from "../Shared/Elements";
+import "./Consult.css";
 
 const Consult = () => {
   const [patientData, setPatientData] = useState(null);
   const [editingVitals, setEditingVitals] = useState({});
   const [consultationNotes, setConsultationNotes] = useState({});
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [medicineOptions, setMedicineOptions] = useState([]);
+  const [medicineSearch, setMedicineSearch] = useState("");
+  const [isSearchingMedicines, setIsSearchingMedicines] = useState(false);
+  const [policies, setPolicies] = useState({});
+  const [prescriptionErrors, setPrescriptionErrors] = useState({});
 
   useEffect(() => {
     getCurrentConsultationService({})
@@ -16,7 +28,7 @@ const Consult = () => {
           setPatientData(response.data.patientData);
         } else {
           toast.error(
-            response.data?.msg || "Unable to fetch current consultation."
+            response.data?.msg || "Unable to fetch current consultation.",
           );
         }
       })
@@ -24,6 +36,254 @@ const Consult = () => {
         toast.error("Unable to fetch current consultation.");
       });
   }, []);
+
+  useEffect(() => {
+    requestPoliciesService({
+      policies: ["tabletDose", "capsuleDose", "syrupDose", "defaultDose"],
+    })
+      .then((response) => {
+        if (response.status === 200 && response.data) {
+          setPolicies(response.data.data || response.data);
+        } else {
+          toast.error(
+            response.data?.msg || "Unable to load prescription policies.",
+          );
+        }
+      })
+      .catch(() => toast.error("Unable to load prescription policies."));
+  }, []);
+
+  useEffect(() => {
+    const searchValue = medicineSearch.trim();
+
+    if (searchValue.length < 2) {
+      setMedicineOptions([]);
+      setIsSearchingMedicines(false);
+      return undefined;
+    }
+
+    setIsSearchingMedicines(true);
+    let ignoreResult = false;
+
+    const searchTimer = setTimeout(() => {
+      getAllMedicinesServices({
+        page: 1,
+        rows: 20,
+        sortOrder: 1,
+        sortField: "name",
+        globalFilter: searchValue,
+      })
+        .then((response) => {
+          if (ignoreResult) return;
+          if (response.data?.response === "success") {
+            setMedicineOptions(
+              Array.isArray(response.data.data) ? response.data.data : [],
+            );
+          } else {
+            setMedicineOptions([]);
+          }
+        })
+        .catch(() => {
+          if (!ignoreResult) setMedicineOptions([]);
+        })
+        .finally(() => {
+          if (!ignoreResult) setIsSearchingMedicines(false);
+        });
+    }, 300);
+
+    return () => {
+      ignoreResult = true;
+      clearTimeout(searchTimer);
+    };
+  }, [medicineSearch]);
+
+  const normalizeMedicineName = (name) =>
+    String(name || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
+  const getDoseOptions = (medicineType, baseUnit) => {
+    const type = String(medicineType || baseUnit || "").toLowerCase();
+    let options = [];
+
+    if (type.includes("tablet")) options = policies.tabletDose || [];
+    else if (type.includes("capsule")) options = policies.capsuleDose || [];
+    else if (
+      type.includes("syrup") ||
+      type.includes("suspension") ||
+      type.includes("liquid")
+    ) {
+      options = policies.syrupDose || [];
+    }
+
+    if (!options.length) options = policies.defaultDose || [];
+    options = Array.isArray(options) ? [...options] : [];
+    const hasAsDirected = options.some((option) => {
+      const value =
+        typeof option === "string" ? option : option.value || option.name;
+      return /^as\s*directed$/i.test(String(value || ""));
+    });
+    if (!hasAsDirected) options.push("As Directed");
+    return options;
+  };
+
+  const addPrescription = (medicineName, medicineData = null) => {
+    const medicine = (medicineName || medicineSearch)
+      .trim()
+      .replace(/\s+/g, " ");
+    if (!medicine) {
+      toast.error("Please select or enter a medicine.");
+      return;
+    }
+
+    const isDuplicate = prescriptions.some(
+      (item) =>
+        normalizeMedicineName(item.medicine) ===
+        normalizeMedicineName(medicine),
+    );
+    if (isDuplicate) {
+      toast.warning(`${medicine} is already added to the prescription.`);
+      return;
+    }
+
+    setPrescriptions((current) => [
+      ...current,
+      {
+        medicine,
+        medicineId: medicineData?.id || "",
+        medicineType: medicineData?.type || medicineData?.baseUnit || "",
+        dose: "",
+        frequency: "1-1-1",
+        timing: "After food",
+        route: "Oral",
+        duration: "14 days",
+        quantity: "",
+        note: "",
+      },
+    ]);
+    setMedicineSearch("");
+  };
+
+  const calculatePrescriptionQuantity = (dose, frequency, duration) => {
+    const doseText = String(dose || "").trim();
+    if (!doseText || /^as\s*directed$/i.test(doseText)) return "";
+
+    let doseValue = 0;
+    const fractionMatch = doseText.match(/(\d+)\s*\/\s*(\d+)/);
+    const numberMatch = doseText.match(/(?:^|[^\d])(\d+(?:\.\d+)?)/);
+    if (fractionMatch) {
+      doseValue = Number(fractionMatch[1]) / Number(fractionMatch[2]);
+    } else if (numberMatch) {
+      doseValue = Number(numberMatch[1]);
+    }
+
+    const frequencyText = String(frequency || "").trim();
+    if (!doseValue || !/^\d+(?:-\d+){0,2}$/.test(frequencyText)) return "";
+    const dosesPerDay = frequencyText
+      .split("-")
+      .reduce((total, value) => total + Number(value || 0), 0);
+
+    const durationMatch = String(duration || "").match(
+      /(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months)?/i,
+    );
+    if (!durationMatch) return "";
+
+    let durationDays = Number(durationMatch[1]);
+    const unit = (durationMatch[2] || "day").toLowerCase();
+    if (unit.startsWith("week")) durationDays *= 7;
+    if (unit.startsWith("month")) durationDays *= 30;
+
+    if (!dosesPerDay || !durationDays) return "";
+    const quantity = doseValue * dosesPerDay * durationDays;
+    return Number.isInteger(quantity)
+      ? String(quantity)
+      : String(Number(quantity.toFixed(2)));
+  };
+
+  const updatePrescription = (index, field, value) => {
+    setPrescriptions((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+        const updated = { ...item, [field]: value };
+        updated.quantity = calculatePrescriptionQuantity(
+          updated.dose,
+          updated.frequency,
+          updated.duration,
+        );
+        return updated;
+      }),
+    );
+    setPrescriptionErrors((current) => {
+      if (!current[index]?.[field]) return current;
+      return {
+        ...current,
+        [index]: { ...current[index], [field]: false },
+      };
+    });
+  };
+
+  const validatePrescriptions = () => {
+    if (prescriptions.length === 0) {
+      toast.error("Please add at least one medicine to the prescription.");
+      return false;
+    }
+
+    const errors = {};
+    let firstError = "";
+    prescriptions.forEach((item, index) => {
+      const rowErrors = {};
+      const requiredFields = [
+        "medicine",
+        "dose",
+        "frequency",
+        "timing",
+        "route",
+        "duration",
+      ];
+
+      requiredFields.forEach((field) => {
+        if (!String(item[field] || "").trim()) {
+          rowErrors[field] = true;
+          if (!firstError) {
+            const label =
+              field === "timing"
+                ? "When"
+                : field[0].toUpperCase() + field.slice(1);
+            firstError = `${label} is required for ${item.medicine}.`;
+          }
+        }
+      });
+
+      if (
+        !/^as\s*directed$/i.test(String(item.dose || "").trim()) &&
+        !item.quantity
+      ) {
+        rowErrors.quantity = true;
+        if (!firstError) {
+          firstError = `Quantity could not be calculated for ${item.medicine}. Check dose, frequency, and duration.`;
+        }
+      }
+
+      if (Object.keys(rowErrors).length) errors[index] = rowErrors;
+    });
+
+    setPrescriptionErrors(errors);
+    if (firstError) {
+      toast.error(firstError);
+      return false;
+    }
+    return true;
+  };
+
+  const availableMedicines = medicineOptions.filter(
+    (medicine) =>
+      !prescriptions.some(
+        (item) =>
+          normalizeMedicineName(item.medicine) ===
+          normalizeMedicineName(medicine.name || medicine.genericName),
+      ),
+  );
 
   const detailGroups = patientData
     ? [
@@ -100,16 +360,6 @@ const Consult = () => {
       ],
     },
     {
-      title: "Prescription",
-      fields: [
-        {
-          key: "prescription",
-          label: "Prescription",
-          placeholder: "Add prescription details",
-        },
-      ],
-    },
-    {
       title: "Doctor Remarks",
       fields: [
         {
@@ -127,129 +377,6 @@ const Consult = () => {
         <div className="col-12">
           {patientData ? (
             <>
-              <style>{`
-                .consult-section {
-                  overflow: hidden;
-                  border: 1px solid #dfe6ed !important;
-                  border-radius: 8px !important;
-                  background: #fff;
-                  transition: border-color 0.2s ease;
-                }
-
-                .consult-section:hover {
-                  border-color: #91aaa9 !important;
-                }
-
-                .consult-section summary {
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 12px;
-                  padding: 10px 12px !important;
-                  background: #f2f5f8;
-                  color: #2f8374;
-                  cursor: pointer;
-                  list-style: none;
-                  transition: background 0.2s ease, color 0.2s ease;
-                }
-
-                .consult-section summary::-webkit-details-marker {
-                  display: none;
-                }
-
-                .consult-section summary:hover,
-                .consult-section[open] summary {
-                  background: #2f8374;
-                  color: #fff;
-                }
-
-                .consult-section summary:focus-visible {
-                  outline: 2px solid #248f86;
-                  outline-offset: -3px;
-                }
-
-                .consult-summary-meta {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  margin-left: auto;
-                }
-
-                .consult-toggle {
-                  flex: 0 0 auto;
-                  color: #60758a;
-                  font-size: 17px;
-                  line-height: 1;
-                }
-
-                .consult-toggle::before {
-                  content: "+";
-                }
-
-                .consult-section[open] .consult-toggle {
-                  color: #fff;
-                }
-
-                .consult-section[open] .consult-toggle::before {
-                  content: "-";
-                }
-
-                .consult-count {
-                  min-width: 62px;
-                  padding: 3px 8px;
-                  border: 1px solid #d5dee6;
-                  border-radius: 6px;
-                  background: #fff;
-                  color: #526579;
-                  font-size: 11px;
-                  font-weight: 500;
-                  text-align: center;
-                  white-space: nowrap;
-                }
-
-                .consult-section[open] .consult-count {
-                  border-color: rgba(255, 255, 255, 0.35);
-                  background: rgba(255, 255, 255, 0.12);
-                  color: #fff;
-                }
-
-                .consult-field {
-                  min-height: 48px;
-                  padding: 7px 8px;
-                  border-bottom: 1px solid #e9edf1;
-                  transition: background 0.15s ease;
-                }
-
-                .consult-field:hover {
-                  background: #f5f8fa;
-                }
-
-                .consult-note {
-                  min-height: 90px;
-                  resize: vertical;
-                }
-
-                .consult-action {
-                  min-height: 38px;
-                  border-radius: 6px;
-                  font-weight: 600;
-                  transition: background 0.15s ease, transform 0.15s ease;
-                }
-
-                .consult-action:hover {
-                  transform: translateY(-1px);
-                }
-
-                @media (max-width: 575px) {
-                  .consult-section summary {
-                    padding: 10px !important;
-                  }
-
-                  .consult-field {
-                    min-height: auto;
-                  }
-                }
-              `}</style>
               {detailGroups.map((group, index) => (
                 <details
                   key={group.title}
@@ -258,19 +385,7 @@ const Consult = () => {
                 >
                   <summary className="fw-semibold">
                     <span className="d-flex align-items-center gap-2">
-                      <span
-                        className="small fw-bold"
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "6px",
-                          background: "rgba(91, 130, 160, 0.16)",
-                          color: "inherit",
-                        }}
-                      >
+                      <span className="consult-index small fw-bold">
                         {index + 1}
                       </span>
                       {group.title}
@@ -288,27 +403,21 @@ const Consult = () => {
                         value === "" || value == null ? "-" : value;
 
                       return (
-                        <div
-                          className="col-12 col-sm-6 col-lg-3"
-                          key={label}
-                        >
-                          <div className="consult-field" style={{ minWidth: 0 }}>
+                        <div className="col-12 col-sm-6 col-lg-3" key={label}>
+                          <div className="consult-field">
                             <span className="text-muted small d-block">
                               {label}
                             </span>
                             {fieldName ? (
                               editingVitals[fieldName] ? (
                                 <div className="d-flex align-items-center gap-1">
-                                  <input
-                                    type="text"
-                                    className="form-control form-control-sm"
-                                    aria-label={label}
+                                  <TextInput
                                     value={value ?? ""}
                                     autoFocus
-                                    onChange={(event) =>
+                                    onChange={(inputValue) =>
                                       setPatientData((currentData) => ({
                                         ...currentData,
-                                        [fieldName]: event.target.value,
+                                        [fieldName]: inputValue,
                                       }))
                                     }
                                   />
@@ -360,6 +469,257 @@ const Consult = () => {
                   </div>
                 </details>
               ))}
+              <details
+                className="consult-section prescription-section mb-2"
+                open
+              >
+                <summary className="fw-semibold">
+                  <span className="d-flex align-items-center gap-2">
+                    <span className="consult-index small fw-bold">
+                      {detailGroups.length + 1}
+                    </span>
+                    Prescription
+                  </span>
+                  <span className="consult-summary-meta">
+                    <span className="consult-toggle" aria-hidden="true" />
+                    <span className="consult-count">
+                      {prescriptions.length} medicines
+                    </span>
+                  </span>
+                </summary>
+                <div className="prescription-list">
+                  {/* <div className="prescription-header" aria-hidden="true"> */}
+                  {/* <span>Medicine</span><span>Dose</span><span>Frequency</span><span>When</span><span>Route</span><span>Duration</span><span>Qty</span><span>Note</span><span></span> */}
+                  {/* </div> */}
+                  {prescriptions.map((item, index) => (
+                    <div
+                      className="prescription-row"
+                      key={`${item.medicine}-${index}`}
+                    >
+                      <div>
+                        <label className="form-label">Medicine</label>
+                        <TextInput
+                          value={item.medicine}
+                          disabled
+                          onChange={() => {}}
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.dose
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <Select
+                          label="Dose"
+                          required
+                          value={item.dose}
+                          data={getDoseOptions(item.medicineType)}
+                          onChange={(value) =>
+                            updatePrescription(index, "dose", value)
+                          }
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.frequency
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <Select
+                          label="Frequency"
+                          required
+                          value={item.frequency}
+                          data={[
+                            "1-0-0",
+                            "1-1-1",
+                            "1-0-1",
+                            "0-1-0",
+                            "0-0-1",
+                            "SOS",
+                          ]}
+                          onChange={(value) =>
+                            updatePrescription(index, "frequency", value)
+                          }
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.timing
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <Select
+                          label="When"
+                          required
+                          value={item.timing}
+                          data={[
+                            "Before food",
+                            "After food",
+                            "With food",
+                            "At bedtime",
+                            "Empty stomach",
+                          ]}
+                          onChange={(value) =>
+                            updatePrescription(index, "timing", value)
+                          }
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.route
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <Select
+                          label="Route"
+                          required
+                          value={item.route}
+                          data={[
+                            "Oral",
+                            "Topical",
+                            "Inhalation",
+                            "IV",
+                            "IM",
+                            "Subcutaneous",
+                          ]}
+                          onChange={(value) =>
+                            updatePrescription(index, "route", value)
+                          }
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.duration
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <TextInput
+                          label="Duration"
+                          required
+                          value={item.duration}
+                          placeholder="14 days"
+                          onChange={(value) =>
+                            updatePrescription(index, "duration", value)
+                          }
+                        />
+                      </div>
+                      <div
+                        className={
+                          prescriptionErrors[index]?.quantity
+                            ? "prescription-field-error"
+                            : ""
+                        }
+                      >
+                        <NumInput
+                          label="Qty"
+                          value={item.quantity}
+                          placeholder="Enter quantity"
+                          required={
+                            !/^as\s*directed$/i.test(String(item.dose || ""))
+                          }
+                          onChange={(value) =>
+                            updatePrescription(index, "quantity", value)
+                          }
+                        />
+                      </div>
+                      <div>
+                        <TextInput
+                          label="Note"
+                          value={item.note}
+                          placeholder="Optional"
+                          onChange={(value) =>
+                            updatePrescription(index, "note", value)
+                          }
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger prescription-delete"
+                        aria-label={`Remove ${item.medicine}`}
+                        title="Remove medicine"
+                        onClick={() =>
+                          setPrescriptions((current) =>
+                            current.filter(
+                              (_, itemIndex) => itemIndex !== index,
+                            ),
+                          )
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {prescriptions.length === 0 && (
+                    <div className="prescription-empty">No medicines added</div>
+                  )}
+                </div>
+                <div className="prescription-search-wrap">
+                  <TextInput
+                    label=""
+                    value={medicineSearch}
+                    placeholder="Search medicines (minimum 2 letters)..."
+                    onChange={setMedicineSearch}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        availableMedicines.length > 0
+                      ) {
+                        addPrescription(
+                          availableMedicines[0].name ||
+                            availableMedicines[0].genericName ||
+                            "",
+                          availableMedicines[0],
+                        );
+                      }
+                    }}
+                  />
+                  {medicineSearch.trim().length >= 2 && (
+                    <div className="prescription-suggestions">
+                      {isSearchingMedicines ? (
+                        <div className="prescription-suggestion text-muted">
+                          Searching medicines...
+                        </div>
+                      ) : availableMedicines.length > 0 ? (
+                        availableMedicines.map((medicine) => (
+                          <button
+                            type="button"
+                            className="prescription-suggestion"
+                            key={medicine.id || medicine.name}
+                            onClick={() =>
+                              addPrescription(
+                                medicine.name || medicine.genericName || "",
+                                medicine,
+                              )
+                            }
+                          >
+                            <span className="fw-semibold d-block">
+                              {medicine.name}
+                            </span>
+                            {(medicine.genericName ||
+                              medicine.manufacturer) && (
+                              <span className="small text-muted">
+                                {[medicine.genericName, medicine.manufacturer]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="prescription-suggestion text-muted">
+                          No new medicines found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </details>
               {consultationSections.map((section, index) => (
                 <details
                   key={section.title}
@@ -368,19 +728,7 @@ const Consult = () => {
                 >
                   <summary className="fw-semibold">
                     <span className="d-flex align-items-center gap-2">
-                      <span
-                        className="small fw-bold"
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "6px",
-                          background: "rgba(91, 130, 160, 0.16)",
-                          color: "inherit",
-                        }}
-                      >
+                      <span className="consult-index small fw-bold">
                         {index + 1}
                       </span>
                       {section.title}
@@ -422,12 +770,14 @@ const Consult = () => {
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-secondary consult-action"
+                  onClick={validatePrescriptions}
                 >
                   Save Draft
                 </button>
                 <button
                   type="button"
                   className="btn btn-sm btn-danger consult-action"
+                  onClick={validatePrescriptions}
                 >
                   End Consultation
                 </button>

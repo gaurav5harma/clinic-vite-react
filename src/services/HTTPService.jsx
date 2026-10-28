@@ -43,8 +43,8 @@ export const upgradeClassesService = (params) => {
 export const addNewCenterService = (params) => {
   return httpPOST("/create/_AddNewCenter", params);
 };
-export const addNewAgentService = (params) => {
-  return httpPOST("/create/_AddNewAgent", params);
+export const addNewMedicineService = (params) => {
+  return httpPOST("/create/_AddNewMedicine", params);
 };
 export const addNewVehicleCategoryService = (params) => {
   return httpPOST("/create/_AddNewVehicleCategory", params);
@@ -96,8 +96,8 @@ export const performActionService = (params) => {
 export const updateCenterService = (params) => {
   return httpPOST("/update/_UpdateCenter", params);
 };
-export const updateAgentService = (params) => {
-  return httpPOST("/update/_UpdateAgent", params);
+export const updateMedicineService = (params) => {
+  return httpPOST("/update/_UpdateMedicine", params);
 };
 export const updateVehicleCategoryService = (params) => {
   return httpPOST("/update/_UpdateVehicleCategory", params);
@@ -315,8 +315,8 @@ export const getAllCentersService = (params) => {
 export const getAllStatusService = (params) => {
   return httpPOST("/datatables/_GetAllStatus", params);
 };
-export const getAllAgentsServices = (params) => {
-  return httpPOST("/datatables/_GetAllAgents", params);
+export const getAllMedicinesServices = (params) => {
+  return httpPOST("/datatables/_GetAllMedicines", params);
 };
 export const getAllVehicleCategoriesServices = (params) => {
   return httpPOST("/datatables/_GetAllVehicleCategories", params);

@@ -1,0 +1,27 @@
+.medicine-form-header {
+  background: #2f8374;
+}
+
+.medicine-form-body {
+  background: #f3fbfb;
+}
+
+.medicine-form-action {
+  width: 160px;
+  height: 38px;
+}
+
+.medicine-status-cell {
+  width: 20px;
+  text-align: center;
+}
+
+.medicine-status-badge {
+  text-transform: capitalize;
+}
+
+@media (max-width: 575px) {
+  .medicine-form-action {
+    width: 145px;
+  }
+}

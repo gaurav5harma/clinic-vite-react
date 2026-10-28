@@ -484,6 +484,14 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+textarea,
+select,
+.form-control,
+.select-search__input {
+  color: #000 !important;
+}
+
 .quick-link-card:hover {
   background: white;
   color: #2f8374;

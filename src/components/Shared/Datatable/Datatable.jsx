@@ -168,15 +168,15 @@ export default function Datatable(props) {
     <>
       {/* 🔹 TOP CONTROLS – SAME STRUCTURE */}
       <div
-        className="row"
+        className="row g-2 align-items-center"
         style={{
           padding:
             (options.pagination && options.globalFilter) === true
-              ? "20px 0px"
+              ? "12px 0px"
               : "0px",
         }}
       >
-        <div className="col-12 col-md-2">
+        <div className="col-6 col-md-2">
           {options.pagination && (
             <select
               className="form-select"
@@ -192,15 +192,19 @@ export default function Datatable(props) {
           )}
         </div>
 
-        <div className="col-12 col-md-2">
+        <div className="col-6 col-md-2">
           {options.print && (
-            <button className="btn btn-theme" onClick={printData}>
+            <button
+              type="button"
+              className="btn btn-theme w-100"
+              onClick={printData}
+            >
               Print
             </button>
           )}
         </div>
 
-        <div className="col-12 col-md-5"></div>
+        <div className="d-none d-md-block col-md-5"></div>
 
         <div className="col-12 col-md-3">
           {options.globalFilter && (
