@@ -27,6 +27,7 @@ const NumInput = (props) => {
         }
         value={props.value}
         disabled={props.disabled ? props.disabled : false}
+        readOnly={props.readOnly ? props.readOnly : false}
         onChange={(e) => {
           let val = e.target.value;
           if (props.pattern) {

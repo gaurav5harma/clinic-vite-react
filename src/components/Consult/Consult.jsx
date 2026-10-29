@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaCheck, FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import PageWrapper from "../../hoc/PageWrapper";
+import { logout } from "../../services/AuthService";
 import {
   getAllMedicinesServices,
   getCurrentConsultationService,
   requestPoliciesService,
+  updateConsultationService,
 } from "../../services/HTTPService";
-import { NumInput, Select, TextInput } from "../Shared/Elements";
+import { DateInput, NumInput, Select, TextInput } from "../Shared/Elements";
 import "./Consult.css";
 
 const Consult = () => {
+  const navigate = useNavigate();
   const [patientData, setPatientData] = useState(null);
   const [editingVitals, setEditingVitals] = useState({});
   const [consultationNotes, setConsultationNotes] = useState({});
@@ -20,12 +24,59 @@ const Consult = () => {
   const [isSearchingMedicines, setIsSearchingMedicines] = useState(false);
   const [policies, setPolicies] = useState({});
   const [prescriptionErrors, setPrescriptionErrors] = useState({});
+  const [isSavingConsultation, setIsSavingConsultation] = useState(false);
 
   useEffect(() => {
     getCurrentConsultationService({})
       .then((response) => {
-        if (response.data?.status === "success" && response.data.patientData) {
-          setPatientData(response.data.patientData);
+        if (response.data?.status === "success" && response.data.patientDetails) {
+          const data = response.data;
+          setPatientData({
+            ...data.patientDetails,
+            ...data.vitals,
+            consultationHistory: data.consultationHistory || [],
+            updateKey: data.updateKey || data.consultationId || "",
+          });
+          setConsultationNotes({
+            allergies: data.allergiesAndMedicalHistory?.allergies || "",
+            medicalHistory:
+              data.allergiesAndMedicalHistory?.medicalHistory || "",
+            investigationFindings: data.investigationAndFindings || "",
+            diagnosis: data.diagnosis || "",
+            doctorRemarks: data.doctorRemarks || "",
+            followUpDate: data.followUpDate || "",
+          });
+
+          const existingPrescription = data.prescription;
+          if (Array.isArray(existingPrescription)) {
+            setPrescriptions(
+              existingPrescription.map((item) => ({
+                medicineId: item.medicineId || item.id || "",
+                medicine: item.medicine || item.name || "",
+                medicineType: item.medicineType || item.type || item.baseUnit || "",
+                dose: item.dose || "",
+                frequency: item.frequency || "1-1-1",
+                timing: item.timing || "After food",
+                route: item.route || "Oral",
+                duration: item.duration || "14 days",
+                quantity:
+                  /^as\s*directed$/i.test(String(item.dose || ""))
+                    ? ""
+                    : /tablet|capsule/i.test(
+                          String(item.medicineType || item.type || item.baseUnit || ""),
+                        )
+                      ? calculatePrescriptionQuantity(
+                          item.dose || "",
+                          item.frequency || "1-1-1",
+                          item.duration || "14 days",
+                        )
+                      : item.quantity || "",
+                note: item.note || "",
+              })),
+            );
+          } else {
+            setPrescriptions([]);
+          }
         } else {
           toast.error(
             response.data?.msg || "Unable to fetch current consultation.",
@@ -201,16 +252,37 @@ const Consult = () => {
       : String(Number(quantity.toFixed(2)));
   };
 
+  const isAutoQuantityMedicine = (item) => {
+    const medicineType = String(
+      item?.medicineType || item?.baseUnit || item?.type || "",
+    ).toLowerCase();
+    return medicineType.includes("tablet") || medicineType.includes("capsule");
+  };
+
   const updatePrescription = (index, field, value) => {
     setPrescriptions((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item;
         const updated = { ...item, [field]: value };
-        updated.quantity = calculatePrescriptionQuantity(
-          updated.dose,
-          updated.frequency,
-          updated.duration,
-        );
+
+        if (/^as\s*directed$/i.test(String(updated.dose || "").trim())) {
+          updated.quantity = "";
+        } else if (field === "quantity") {
+          if (!isAutoQuantityMedicine(updated)) updated.quantity = value;
+          else {
+            updated.quantity = calculatePrescriptionQuantity(
+              updated.dose,
+              updated.frequency,
+              updated.duration,
+            );
+          }
+        } else if (isAutoQuantityMedicine(updated)) {
+          updated.quantity = calculatePrescriptionQuantity(
+            updated.dose,
+            updated.frequency,
+            updated.duration,
+          );
+        }
         return updated;
       }),
     );
@@ -224,10 +296,10 @@ const Consult = () => {
   };
 
   const validatePrescriptions = () => {
-    if (prescriptions.length === 0) {
-      toast.error("Please add at least one medicine to the prescription.");
-      return false;
-    }
+    // if (prescriptions.length === 0) {
+    //   toast.error("Please add at least one medicine to the prescription.");
+    //   return false;
+    // }
 
     const errors = {};
     let firstError = "";
@@ -261,7 +333,7 @@ const Consult = () => {
       ) {
         rowErrors.quantity = true;
         if (!firstError) {
-          firstError = `Quantity could not be calculated for ${item.medicine}. Check dose, frequency, and duration.`;
+          firstError = `Quantity is required for ${item.medicine}.`;
         }
       }
 
@@ -285,6 +357,87 @@ const Consult = () => {
       ),
   );
 
+  const saveConsultation = (completionStatus) => {
+    if (completionStatus === "completed" && !validatePrescriptions()) {
+      return;
+    }
+
+    const payload = {
+      updateKey: patientData?.updateKey || patientData?.consultationId || patientData?.id || "",
+      status: completionStatus === "completed" ? "completed" : "draft",
+      patientDetails: {
+        uhid: patientData?.uhid || "",
+        name: patientData?.name || "",
+        gender: patientData?.gender || "",
+        age: patientData?.age ?? "",
+        address: patientData?.address || "",
+        mobile: patientData?.mobile || "",
+        date: patientData?.date || "",
+        token: patientData?.token ?? "",
+        entryAt: patientData?.entryAt || "",
+        receptionRemarks: patientData?.receptionRemarks || "",
+      },
+      vitals: {
+        bloodPressure: patientData?.bloodPressure ?? "",
+        bloodSugar: patientData?.bloodSugar ?? "",
+        height: patientData?.height ?? "",
+        weight: patientData?.weight ?? "",
+        temperature: patientData?.temperature ?? "",
+        bloodOxygen: patientData?.bloodOxygen ?? "",
+        pulse: patientData?.pulse ?? "",
+      },
+      allergiesAndMedicalHistory: {
+        allergies: consultationNotes.allergies || "",
+        medicalHistory: consultationNotes.medicalHistory || "",
+      },
+      investigationAndFindings: consultationNotes.investigationFindings || "",
+      diagnosis: consultationNotes.diagnosis || "",
+      doctorRemarks: consultationNotes.doctorRemarks || "",
+      followUpDate: consultationNotes.followUpDate || null,
+      prescription: prescriptions.map((item) => ({
+        medicineId: item.medicineId || "",
+        medicine: item.medicine,
+        dose: item.dose,
+        frequency: item.frequency,
+        timing: item.timing,
+        route: item.route,
+        duration: item.duration,
+        quantity: item.quantity,
+        note: item.note,
+      })),
+    };
+
+    setIsSavingConsultation(true);
+    updateConsultationService(payload)
+      .then((response) => {
+        if (response.data.status === "success") {
+          toast.success(response.data.msg || (
+            completionStatus === "completed"
+              ? "Consultation completed successfully."
+              : "Consultation draft saved successfully."
+          ));
+        } else if (response.data.status === "warning") {
+          toast.warning(response.data.msg);
+        } else if (response.data.status === "error") {
+          toast.error(response.data.msg);
+        } else if (response.data.status === "logout") {
+          logout();
+          navigate("/login");
+        } else {
+          toast.error(
+            "Error in updating consultation, Something went wrong. " +
+              response.data.status,
+          );
+        }
+        setIsSavingConsultation(false);
+      })
+      .catch(() => {
+        navigate("/dashboard");
+        toast.error("Catch Error, Something went wrong");
+        setIsSavingConsultation(false);
+      });
+  };
+
   const detailGroups = patientData
     ? [
         {
@@ -296,16 +449,10 @@ const Consult = () => {
             ["Age", patientData.age],
             ["Address", patientData.address],
             ["Mobile", patientData.mobile],
-            ["Patient ID", patientData.id],
             ["Date", patientData.date],
             ["Token", patientData.token],
-            ["Doctor ID", patientData.doctorId],
-            ["Created By", patientData.createdBy],
-            ["Created At", patientData.createdAt],
-            ["Remarks", patientData.remarks],
+            ["Entry At", patientData.entryAt],
             ["Reception Remarks", patientData.receptionRemarks],
-            ["Status", patientData.status],
-            ["Queue", patientData.queue],
           ],
         },
         {
@@ -343,9 +490,9 @@ const Consult = () => {
       title: "Previous Consultations",
       fields: [
         {
-          key: "previousConsultations",
+          key: "consultationHistory",
           label: "Consultation History",
-          placeholder: "Add relevant previous consultation details",
+          type: "history",
         },
       ],
     },
@@ -356,6 +503,26 @@ const Consult = () => {
           key: "investigationFindings",
           label: "Investigation and Findings",
           placeholder: "Add investigation results and clinical findings",
+        },
+      ],
+    },
+    {
+      title: "Diagnosis",
+      fields: [
+        {
+          key: "diagnosis",
+          label: "Diagnosis",
+          placeholder: "Add diagnosis",
+        },
+      ],
+    },
+    {
+      title: "Follow-Up",
+      fields: [
+        {
+          key: "followUpDate",
+          label: "Follow-Up Date",
+          type: "date",
         },
       ],
     },
@@ -623,6 +790,10 @@ const Consult = () => {
                           required={
                             !/^as\s*directed$/i.test(String(item.dose || ""))
                           }
+                          readOnly={
+                            isAutoQuantityMedicine(item) ||
+                            /^as\s*directed$/i.test(String(item.dose || ""))
+                          }
                           onChange={(value) =>
                             updatePrescription(index, "quantity", value)
                           }
@@ -743,24 +914,57 @@ const Consult = () => {
                   <div className="row gx-2 gy-2 p-2">
                     {section.fields.map((field) => (
                       <div className="col-12" key={field.key}>
-                        <label
-                          className="form-label small fw-semibold mb-1"
-                          htmlFor={`consult-${field.key}`}
-                        >
-                          {field.label}
-                        </label>
-                        <textarea
-                          id={`consult-${field.key}`}
-                          className="form-control form-control-sm consult-note"
-                          placeholder={field.placeholder}
-                          value={consultationNotes[field.key] || ""}
-                          onChange={(event) =>
-                            setConsultationNotes((currentNotes) => ({
-                              ...currentNotes,
-                              [field.key]: event.target.value,
-                            }))
-                          }
-                        />
+                        {field.type === "history" ? (
+                          <div className="consult-history-list">
+                            {patientData.consultationHistory?.length ? (
+                              patientData.consultationHistory.map((item) => (
+                                <div
+                                  className="consult-history-item small"
+                                  key={item.id || item.date}
+                                >
+                                  Consultation #{item.id} · {item.date}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-muted small">
+                                No previous consultations found.
+                              </div>
+                            )}
+                          </div>
+                        ) : field.type === "date" ? (
+                          <DateInput
+                            label={null}
+                            value={consultationNotes[field.key] || ""}
+                            minDate={new Date().toISOString().split("T")[0]}
+                            onChange={(value) =>
+                              setConsultationNotes((currentNotes) => ({
+                                ...currentNotes,
+                                [field.key]: value,
+                              }))
+                            }
+                          />
+                        ) : (
+                          <>
+                            <label
+                              className="form-label small fw-semibold mb-1"
+                              htmlFor={`consult-${field.key}`}
+                            >
+                              {field.label}
+                            </label>
+                            <textarea
+                              id={`consult-${field.key}`}
+                              className="form-control form-control-sm consult-note"
+                              placeholder={field.placeholder}
+                              value={consultationNotes[field.key] || ""}
+                              onChange={(event) =>
+                                setConsultationNotes((currentNotes) => ({
+                                  ...currentNotes,
+                                  [field.key]: event.target.value,
+                                }))
+                              }
+                            />
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -770,16 +974,18 @@ const Consult = () => {
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-secondary consult-action"
-                  onClick={validatePrescriptions}
+                  disabled={isSavingConsultation}
+                  onClick={() => saveConsultation("draft")}
                 >
-                  Save Draft
+                  {isSavingConsultation ? "Saving..." : "Save Draft"}
                 </button>
                 <button
                   type="button"
-                  className="btn btn-sm btn-danger consult-action"
-                  onClick={validatePrescriptions}
+                  className="btn btn-sm btn-danger consult-action text-light"
+                  disabled={isSavingConsultation}
+                  onClick={() => saveConsultation("completed")}
                 >
-                  End Consultation
+                  {isSavingConsultation ? "Saving..." : "Complete Consultation"}
                 </button>
               </div>
             </>
